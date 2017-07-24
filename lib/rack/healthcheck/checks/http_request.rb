@@ -32,11 +32,17 @@ module Rack::Healthcheck::Checks
 
     def check
       uri = URI(url)
-      http = Net::HTTP.new(uri.host)
+      http = Net::HTTP.new(uri.host, uri.port)
       response = http.get(uri.path, config[:headers])
-      @status = response.body.gsub(/\n/, '') == config[:expected_result]
+      @status = if config[:expected_result]
+                  response.body.gsub(/\n/, '') == config[:expected_result]
+                else
+                  response.code == '200'
+                end
     rescue Exception => e
+      puts "Rescued '#{e}' in health check"
       @status = false
     end
   end
+
 end
